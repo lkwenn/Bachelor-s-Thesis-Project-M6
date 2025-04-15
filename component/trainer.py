@@ -103,29 +103,25 @@ class Trainer:
                 w.grad = pseudo_grad[k]
         self.optimizer.step()
 
-
 class FedAvg(Trainer):
     def __init__(self, setup):
         super().__init__(setup)
         self.optimizer = SGD(lr=0.1, params=self.model.parameters())
 
-
 class FedAdam(Trainer):
     def __init__(self, setup):
         super().__init__(setup)
-        self.optimizer = Adam(lr=1e-3, params=self.model.parameters())
+        self.optimizer = Adam(lr=1e-3, betas=(0.9, 0.999), eps=1e-8, params=self.model.parameters())
 
 class FedYogi(Trainer):
     def __init__(self, setup):
         super().__init__(setup)
-        self.optimizer = Yogi(lr=1e-3, params=self.model.parameters())
-
+        self.optimizer = Yogi(lr=1e-3, betas=(0.9, 0.999), eps=1e-8, params=self.model.parameters())
 
 class AdaFedAdam(Trainer):
     def __init__(self, setup):
         super().__init__(setup)
-        self.optimizer = AdaAdam(
-            lr=1e-3, params=self.model.parameters())
+        self.optimizer = AdaAdam(lr=1e-3, betas=(0.9, 0.999), eps=1e-8, params=self.model.parameters())
 
     def train(self, clients, participation, epochs):
         # select clients
@@ -184,8 +180,8 @@ class AdaFedAdam(Trainer):
         self.optimizer.set_confidence(certainty)
         self.optimizer.step()
 
-class FedMGDAM(Trainer):
-    def __init__(self, setup, gamma_l=0.1, gamma_g=0.1, beta=0.9):
+class FedAvgM(Trainer):
+    def __init__(self, setup, gamma_l=1/200**(1/3), gamma_g=1, beta=0.9):
         super().__init__(setup)
         self.gamma_l = gamma_l
         self.gamma_g = gamma_g
