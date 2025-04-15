@@ -1,0 +1,6 @@
+torch
+torchvision
+ujson
+pyyaml
+matplotlib
+torch_optimizer
