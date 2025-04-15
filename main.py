@@ -2,10 +2,10 @@ import copy
 import yaml
 import ujson
 import argparse
-from kex.kex.component.client import Client
-from kex.kex.utils import preprocess
+from component.client import Client
+from utils import preprocess
 import torch
-from kex.kex.component.trainer import FedAvg, FedAdam, FedYogi, AdaFedAdam, FedMGDAM
+from component.trainer import FedAvg, FedAdam, FedYogi, AdaFedAdam, FedAvgM
 import matplotlib.pyplot as plt
 
 
@@ -35,7 +35,7 @@ def main(config):
         "fedadam": FedAdam,
         "fedyogi": FedYogi,
         "adafedadam": AdaFedAdam,
-        "fedmgdam": FedMGDAM
+        "fedavgm": FedAvgM
     }
     trainer = trainer_dict[config['trainer']](config['dataset'])
 
@@ -43,6 +43,8 @@ def main(config):
     lst_acc = []
     lst_loss = []
     eval_rounds = []
+    lst_std_acc = []
+    lst_std_loss = []
 
     first_round = True
     # Global training loop
@@ -55,15 +57,17 @@ def main(config):
             print(
                 f"Round {round+1}/{config['num_rounds']} - "
                 f"Avg acc: {eval_result['avg_acc']:.4f}, "
-                f"Avg error: {eval_result['avg_error']:.4f}, ")
-                # f"Std acc: {eval_result['std_acc']:.4f}, "
-                # f"Std error: {eval_result['std_error']:.4f}")
+                f"Avg error: {eval_result['avg_error']:.4f}, "
+                f"Std acc: {eval_result['std_acc']:.4f}, "
+                f"Std error: {eval_result['std_error']:.4f}")
             lst_acc.append(eval_result['avg_acc'])
             lst_loss.append(eval_result['avg_error'])
             eval_rounds.append(round + 1)
+            lst_std_acc.append(eval_result['std_acc'])
+            lst_std_loss.append(eval_result['std_error'])
 
         # Train the model
-        if config['trainer'] == "fedmgdam":  #FedMGDAM
+        if config['trainer'] == "fedavgm":  #FedAvg-M
             if first_round:
                 global_weights, d = trainer.train(clients, config['participation'], config['local_epochs'], first_round)
                 first_round = False
@@ -72,35 +76,59 @@ def main(config):
         else:  # FedAvg, FedAdam, FedYogi, AdaFedAdam
             trainer.train(clients, config['participation'], config['local_epochs'])
 
-    return lst_acc, lst_loss, eval_rounds
+    return lst_acc, lst_loss, eval_rounds, lst_std_acc, lst_std_loss
 
-def results():
+def results(TRAINERS):
     """
     Runs all federated optimizers and plot their accuracy, loss and convergence
     """
     eval_acc = {}
     eval_loss = {}
     rounds = {}
+    eval_std_acc = {}
+    eval_std_loss = {}
     for tr in TRAINERS:
         config_copy = copy.deepcopy(config)
         config_copy['trainer'] = tr
-        eval_acc[tr], eval_loss[tr], rounds[tr] = main(config_copy)
+        eval_acc[tr], eval_loss[tr], rounds[tr], eval_std_acc[tr], eval_std_loss[tr] = main(config_copy)
 
     # Plot accuracy
-    markers = {"fedavg": 'o', "fedadam": 'v', "fedyogi": '^', "adafedadam": 's', "fedmgdam": 'd'}
+    colors = {"fedavg": 'firebrick', "fedadam": 'chartreuse', "fedyogi": 'deepskyblue', "adafedadam": 'magenta',
+              "fedavgm": 'mediumblue'}
     for tr in TRAINERS:
-        plt.plot(rounds[tr], eval_acc[tr], markers[tr], label=tr)
+        """
+        for i in range(len(rounds[tr])):
+            plt.plot(rounds[tr][i], eval_acc[tr][i], colors[tr], label=tr)
+            plt.fill_between(rounds[tr][i], eval_acc[tr][i] - eval_std_acc[tr][i],
+                     eval_acc[tr][i] + eval_std_acc[tr][i], alpha=0.3)
+            # plt.fill_between(rounds[tr], )
+        """
+        plt.plot(rounds[tr], eval_acc[tr], colors[tr], label=tr)
+        eval_neg = []
+        eval_pos = []
+        for i in range(len(rounds[tr])):
+            eval_neg.append(eval_acc[tr][i] - eval_std_acc[tr][i])
+            eval_pos.append(eval_acc[tr][i] + eval_std_acc[tr][i])
+        plt.fill_between(rounds[tr], eval_neg, eval_pos, alpha=0.3, color=colors[tr])
     plt.xlabel('Number of rounds')
     plt.ylabel('Accuracy')
     plt.legend()
+    plt.grid()
     plt.show()
 
     # Plot loss
     for tr in TRAINERS:
-        plt.plot(rounds[tr], eval_loss[tr], markers[tr], label=tr)
+        plt.plot(rounds[tr], eval_loss[tr], colors[tr], label=tr)
+        eval_neg = []
+        eval_pos = []
+        for i in range(len(rounds[tr])):
+            eval_neg.append(eval_loss[tr][i] - eval_std_loss[tr][i])
+            eval_pos.append(eval_loss[tr][i] + eval_std_loss[tr][i])
+        plt.fill_between(rounds[tr], eval_neg, eval_pos, alpha=0.3, color=colors[tr])
     plt.xlabel('Number of rounds')
     plt.ylabel('Accuracy')
     plt.legend()
+    plt.grid()
     plt.show()
 
 if __name__ == "__main__":
@@ -109,19 +137,19 @@ if __name__ == "__main__":
         config = yaml.load(f, Loader=yaml.FullLoader)
 
     # Get trainers from terminal
-    TRAINERS = ["fedavg", "fedadam", "fedyogi", "adafedadam", "fedmgdam"]
+    TRAINERS = ["fedavg", "fedadam", "fedyogi", "adafedadam", "fedavgm"]
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "trainer", type=str, default="fedavg",
+        "trainer", type=str, default=None,
         nargs="?",
         choices=TRAINERS,
         help="The trainer to use")
 
     args = parser.parse_args()
     if args.trainer is None:
-        results()
+        results(TRAINERS)
     elif args.trainer in TRAINERS:
         config['trainer'] = args.trainer
-        _, _, _ = main(config)
+        _, *_ = main(config)
     else:
         raise RuntimeError('No optimizer with that name exist in module files')
