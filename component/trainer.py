@@ -62,16 +62,23 @@ class Trainer:
         # compute the weighted average
         weights = weights / sum(weights)
         avg_acc = numpy.dot(weights, accs)
+        avg_acc = numpy.dot(100, avg_acc)
         avg_error = numpy.dot(weights, errors)
         # compute the std
         std_acc = accs.std()
         std_error = errors.std()
 
+        # 30% worst results
+        n_worst = int(len(accs) * 0.3)
+        worst_acc = numpy.partition(accs, n_worst - 1)[:n_worst]
+        worst_acc = numpy.dot(100, worst_acc)
+
         return {
             'avg_acc': avg_acc,
             'avg_error': avg_error,
             'std_acc': std_acc,
-            'std_error': std_error
+            'std_error': std_error,
+            'worst_acc': worst_acc
         }
 
     def _train_client(self, client, gweight, epochs):
@@ -181,9 +188,9 @@ class AdaFedAdam(Trainer):
         self.optimizer.step()
 
 class FedAvgM(Trainer):
-    def __init__(self, setup, gamma_l=1/200**(1/3), gamma_g=1, beta=0.9):
+    def __init__(self, setup, gamma_l=0.05, gamma_g=1, beta=0.9):
         super().__init__(setup)
-        self.gamma_l = gamma_l
+        self.gamma_l = gamma_l  # 1/200**(1/3)
         self.gamma_g = gamma_g
         self.beta = beta
 

@@ -45,6 +45,7 @@ def main(config):
     eval_rounds = []
     lst_std_acc = []
     lst_std_loss = []
+    lst_worst_acc = []
 
     first_round = True
     # Global training loop
@@ -65,6 +66,7 @@ def main(config):
             eval_rounds.append(round + 1)
             lst_std_acc.append(eval_result['std_acc'])
             lst_std_loss.append(eval_result['std_error'])
+            lst_worst_acc.append(eval_result['worst_acc'])
 
         # Train the model
         if config['trainer'] == "fedavgm":  #FedAvg-M
@@ -76,7 +78,25 @@ def main(config):
         else:  # FedAvg, FedAdam, FedYogi, AdaFedAdam
             trainer.train(clients, config['participation'], config['local_epochs'])
 
-    return lst_acc, lst_loss, eval_rounds, lst_std_acc, lst_std_loss
+    # Perform final update for FedAvg-M (doesn't affect results)
+    if config['trainer'] == "fedavgm":
+        for client in clients:
+            client.set_weights(global_weights)
+            loss, grad = client.get_grad()
+            local_weights = client.get_weights()
+            # Note: gamma value is default here
+            updated_weights = {k: local_weights[k] - 1e-3 * grad[k] for k in local_weights}
+            client.model.load_state_dict(updated_weights)
+        # Final eval
+        eval_result_fin = trainer.eval(clients)
+        print(
+            f"After final update - "
+            f"Avg acc: {eval_result_fin['avg_acc']:.4f}, "
+            f"Avg error: {eval_result_fin['avg_error']:.4f}, "
+            f"Std acc: {eval_result_fin['std_acc']:.4f}, "
+            f"Std error: {eval_result_fin['std_error']:.4f}")
+
+    return lst_acc, lst_loss, eval_rounds, lst_std_acc, lst_std_loss, lst_worst_acc
 
 def results(TRAINERS):
     """
@@ -87,48 +107,67 @@ def results(TRAINERS):
     rounds = {}
     eval_std_acc = {}
     eval_std_loss = {}
+    eval_worst_acc = {}
     for tr in TRAINERS:
         config_copy = copy.deepcopy(config)
         config_copy['trainer'] = tr
-        eval_acc[tr], eval_loss[tr], rounds[tr], eval_std_acc[tr], eval_std_loss[tr] = main(config_copy)
+        (eval_acc[tr], eval_loss[tr], rounds[tr], eval_std_acc[tr],
+         eval_std_loss[tr], eval_worst_acc[tr]) = main(config_copy)
 
     # Plot accuracy
     colors = {"fedavg": 'firebrick', "fedadam": 'chartreuse', "fedyogi": 'deepskyblue', "adafedadam": 'magenta',
               "fedavgm": 'mediumblue'}
+    fed_names = {"fedavg": 'FedAvg', "fedadam": 'FedAdam', "fedyogi": 'FedYogi', "adafedadam": 'AdaFedAdam',
+                 "fedavgm": 'FedAvg-M'}
+    plt.rcParams["font.family"] = "Times New Roman"
     for tr in TRAINERS:
-        """
-        for i in range(len(rounds[tr])):
-            plt.plot(rounds[tr][i], eval_acc[tr][i], colors[tr], label=tr)
-            plt.fill_between(rounds[tr][i], eval_acc[tr][i] - eval_std_acc[tr][i],
-                     eval_acc[tr][i] + eval_std_acc[tr][i], alpha=0.3)
-            # plt.fill_between(rounds[tr], )
-        """
-        plt.plot(rounds[tr], eval_acc[tr], colors[tr], label=tr)
-        eval_neg = []
-        eval_pos = []
-        for i in range(len(rounds[tr])):
-            eval_neg.append(eval_acc[tr][i] - eval_std_acc[tr][i])
-            eval_pos.append(eval_acc[tr][i] + eval_std_acc[tr][i])
-        plt.fill_between(rounds[tr], eval_neg, eval_pos, alpha=0.3, color=colors[tr])
+        plt.plot(rounds[tr], eval_acc[tr], color=colors[tr], label=fed_names[tr])
+        #eval_neg = []
+        #eval_pos = []
+        #for i in range(len(rounds[tr])):
+        #    eval_neg.append(eval_acc[tr][i] - eval_std_acc[tr][i])
+        #    eval_pos.append(eval_acc[tr][i] + eval_std_acc[tr][i])
+        #plt.fill_between(rounds[tr], eval_neg, eval_pos, alpha=0.3, color=colors[tr])
     plt.xlabel('Number of rounds')
-    plt.ylabel('Accuracy')
+    plt.ylabel('Accuracy / %')
+    plt.title(f"{config['dataset'].upper()} | Non-IID level: {config['non_iid_level']}")
     plt.legend()
     plt.grid()
+    plt.tight_layout()
     plt.show()
 
     # Plot loss
     for tr in TRAINERS:
-        plt.plot(rounds[tr], eval_loss[tr], colors[tr], label=tr)
-        eval_neg = []
-        eval_pos = []
-        for i in range(len(rounds[tr])):
-            eval_neg.append(eval_loss[tr][i] - eval_std_loss[tr][i])
-            eval_pos.append(eval_loss[tr][i] + eval_std_loss[tr][i])
-        plt.fill_between(rounds[tr], eval_neg, eval_pos, alpha=0.3, color=colors[tr])
+        plt.plot(rounds[tr], eval_loss[tr], color=colors[tr], label=fed_names[tr])
+        #eval_neg = []
+        #eval_pos = []
+        #for i in range(len(rounds[tr])):
+        #    eval_neg.append(eval_loss[tr][i] - eval_std_loss[tr][i])
+        #    eval_pos.append(eval_loss[tr][i] + eval_std_loss[tr][i])
+        #plt.fill_between(rounds[tr], eval_neg, eval_pos, alpha=0.3, color=colors[tr])
     plt.xlabel('Number of rounds')
-    plt.ylabel('Accuracy')
+    plt.ylabel('Loss')
+    plt.title(f"{config['dataset'].upper()} | Non-IID level: {config['non_iid_level']}")
     plt.legend()
     plt.grid()
+    plt.tight_layout()
+    plt.show()
+
+    # Plot worst 30%
+    for tr in TRAINERS:
+        plt.plot(rounds[tr], eval_worst_acc[tr], color=colors[tr], label=fed_names[tr])
+        eval_neg = []
+        eval_pos = []
+        #for i in range(len(rounds[tr])):
+        #    eval_neg.append(eval_worst_acc[tr][i] - eval_std_acc[tr][i])
+        #    eval_pos.append(eval_worst_acc[tr][i] + eval_std_acc[tr][i])
+        #plt.fill_between(rounds[tr], eval_neg, eval_pos, alpha=0.3, color=colors[tr])
+    plt.xlabel('Number of rounds')
+    plt.ylabel('Accuracy / %')
+    plt.title(f"{config['dataset'].upper()} | Non-IID level: {config['non_iid_level']}")
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
     plt.show()
 
 if __name__ == "__main__":

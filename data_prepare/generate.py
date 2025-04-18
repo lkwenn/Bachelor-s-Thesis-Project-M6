@@ -1,6 +1,6 @@
 import os
 from data_prepare.partition import partition
-from data_prepare.dataset import mnist, cifar10
+from data_prepare.dataset import mnist, cifar10, fashionmnist
 import yaml
 import ujson
 
@@ -8,6 +8,7 @@ import ujson
 data_funcs = {
     "mnist": mnist,
     "cifar10": cifar10,
+    "fashionmnist": fashionmnist
 }
 
 
@@ -20,7 +21,7 @@ def main():
     seed = config['seeds'][0]
     alpha = config['non_iid_level']
 
-    if config['dataset'] in ["cifar10", "mnist"]:
+    if config['dataset'] in ["cifar10", "mnist", "fashionmnist"]:
         get_data = data_funcs[config['dataset']]
         trainx, trainy = get_data()
 

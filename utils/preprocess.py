@@ -31,6 +31,14 @@ def cifar10(data):
     y = torch.tensor(y).type(torch.LongTensor)
     return TensorDataset(x, y)
 
+def fashionmnist(data):
+    x = numpy.array(data['x'])/255.0
+    x = torch.tensor(x).type(torch.FloatTensor)
+
+    y = numpy.array(data['y'])
+    y = torch.tensor(y).type(torch.LongTensor)
+    return TensorDataset(x, y)
+
 
 class LocalDataset(Dataset):
     def __init__(self, x, y, transform=None):
