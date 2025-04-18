@@ -60,7 +60,8 @@ def main(config):
                 f"Avg acc: {eval_result['avg_acc']:.4f}, "
                 f"Avg error: {eval_result['avg_error']:.4f}, "
                 f"Std acc: {eval_result['std_acc']:.4f}, "
-                f"Std error: {eval_result['std_error']:.4f}")
+                f"Std error: {eval_result['std_error']:.4f}, "
+                f"Worst 30% avg acc: {eval_result['worst_acc']:.4f}")
             lst_acc.append(eval_result['avg_acc'])
             lst_loss.append(eval_result['avg_error'])
             eval_rounds.append(round + 1)
@@ -122,12 +123,6 @@ def results(TRAINERS):
     plt.rcParams["font.family"] = "Times New Roman"
     for tr in TRAINERS:
         plt.plot(rounds[tr], eval_acc[tr], color=colors[tr], label=fed_names[tr])
-        #eval_neg = []
-        #eval_pos = []
-        #for i in range(len(rounds[tr])):
-        #    eval_neg.append(eval_acc[tr][i] - eval_std_acc[tr][i])
-        #    eval_pos.append(eval_acc[tr][i] + eval_std_acc[tr][i])
-        #plt.fill_between(rounds[tr], eval_neg, eval_pos, alpha=0.3, color=colors[tr])
     plt.xlabel('Number of rounds')
     plt.ylabel('Accuracy / %')
     plt.title(f"{config['dataset'].upper()} | Non-IID level: {config['non_iid_level']}")
@@ -139,12 +134,6 @@ def results(TRAINERS):
     # Plot loss
     for tr in TRAINERS:
         plt.plot(rounds[tr], eval_loss[tr], color=colors[tr], label=fed_names[tr])
-        #eval_neg = []
-        #eval_pos = []
-        #for i in range(len(rounds[tr])):
-        #    eval_neg.append(eval_loss[tr][i] - eval_std_loss[tr][i])
-        #    eval_pos.append(eval_loss[tr][i] + eval_std_loss[tr][i])
-        #plt.fill_between(rounds[tr], eval_neg, eval_pos, alpha=0.3, color=colors[tr])
     plt.xlabel('Number of rounds')
     plt.ylabel('Loss')
     plt.title(f"{config['dataset'].upper()} | Non-IID level: {config['non_iid_level']}")
@@ -154,21 +143,16 @@ def results(TRAINERS):
     plt.show()
 
     # Plot worst 30%
-    for tr in TRAINERS:
-        plt.plot(rounds[tr], eval_worst_acc[tr], color=colors[tr], label=fed_names[tr])
-        eval_neg = []
-        eval_pos = []
-        #for i in range(len(rounds[tr])):
-        #    eval_neg.append(eval_worst_acc[tr][i] - eval_std_acc[tr][i])
-        #    eval_pos.append(eval_worst_acc[tr][i] + eval_std_acc[tr][i])
-        #plt.fill_between(rounds[tr], eval_neg, eval_pos, alpha=0.3, color=colors[tr])
-    plt.xlabel('Number of rounds')
-    plt.ylabel('Accuracy / %')
-    plt.title(f"{config['dataset'].upper()} | Non-IID level: {config['non_iid_level']}")
-    plt.legend()
-    plt.grid()
-    plt.tight_layout()
-    plt.show()
+    if eval_worst_acc != eval_acc:
+        for tr in TRAINERS:
+            plt.plot(rounds[tr], eval_worst_acc[tr], color=colors[tr], label=fed_names[tr])
+        plt.xlabel('Number of rounds')
+        plt.ylabel('Accuracy / %')
+        plt.title(f"{config['dataset'].upper()} | Non-IID level: {config['non_iid_level']}")
+        plt.legend()
+        plt.grid()
+        plt.tight_layout()
+        plt.show()
 
 if __name__ == "__main__":
     # Get arguments from config file

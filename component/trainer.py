@@ -57,10 +57,10 @@ class Trainer:
 
         accs = numpy.array(accs)
         errors = numpy.array(errors)
-        weights = numpy.array(weights)
+        weights_all = numpy.array(weights)
 
         # compute the weighted average
-        weights = weights / sum(weights)
+        weights = weights_all / sum(weights_all)
         avg_acc = numpy.dot(weights, accs)
         avg_acc = numpy.dot(100, avg_acc)
         avg_error = numpy.dot(weights, errors)
@@ -69,16 +69,23 @@ class Trainer:
         std_error = errors.std()
 
         # 30% worst results
-        n_worst = int(len(accs) * 0.3)
-        worst_acc = numpy.partition(accs, n_worst - 1)[:n_worst]
-        worst_acc = numpy.dot(100, worst_acc)
+        if accs.size > 3:
+            k = int(accs.size * 0.3)
+            idx_worst = numpy.argpartition(accs, k)[:k]
+            worst_accs = accs[idx_worst]
+            worst_weights = weights_all[idx_worst]
+            worst_weights = worst_weights / sum(worst_weights)
+            worst_avg_acc = numpy.dot(worst_weights, worst_accs)
+            worst_avg_acc = numpy.dot(100, worst_avg_acc)
+        else:
+            worst_avg_acc = avg_acc
 
         return {
             'avg_acc': avg_acc,
             'avg_error': avg_error,
             'std_acc': std_acc,
             'std_error': std_error,
-            'worst_acc': worst_acc
+            'worst_acc': worst_avg_acc
         }
 
     def _train_client(self, client, gweight, epochs):
