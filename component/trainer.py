@@ -66,6 +66,7 @@ class Trainer:
         avg_error = numpy.dot(weights, errors)
         # compute the std
         std_acc = accs.std()
+        std_acc = numpy.dot(100, std_acc)
         std_error = errors.std()
 
         # 30% worst results
@@ -195,7 +196,7 @@ class AdaFedAdam(Trainer):
         self.optimizer.step()
 
 class FedAvgM(Trainer):
-    def __init__(self, setup, gamma_l=0.05, gamma_g=1, beta=0.9):
+    def __init__(self, setup, gamma_l=0.01, gamma_g=0.5, beta=0.9):
         super().__init__(setup)
         self.gamma_l = gamma_l  # 1/200**(1/3)
         self.gamma_g = gamma_g
@@ -260,6 +261,7 @@ class FedAvgM(Trainer):
                 u[key] = self.beta * u[key] + grad[key]
 
             # Update local weights
+            local_weights = client.get_weights()
             for key in local_weights:
                 local_weights[key] = local_weights[key] - self.gamma_l * u[key]
 

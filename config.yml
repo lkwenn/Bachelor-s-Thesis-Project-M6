@@ -1,12 +1,12 @@
 dataset: cifar10
 num_clients: 16
 seeds: 
-  - 0
+  - 3
 iid: False
 non_iid_level: 0.1
 
-batch_size: 20
-num_rounds: 100
+batch_size: 32
+num_rounds: 300
 local_epochs: 1
 eval_every: 5
 participation: 1.0

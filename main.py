@@ -57,9 +57,9 @@ def main(config):
             # print(f"Evaluation result: {eval_result}")
             print(
                 f"Round {round+1}/{config['num_rounds']} - "
-                f"Avg acc: {eval_result['avg_acc']:.4f}, "
+                f"Avg acc (%): {eval_result['avg_acc']:.4f}, "
                 f"Avg error: {eval_result['avg_error']:.4f}, "
-                f"Std acc: {eval_result['std_acc']:.4f}, "
+                f"Std acc (%): {eval_result['std_acc']:.4f}, "
                 f"Std error: {eval_result['std_error']:.4f}, "
                 f"Worst 30% avg acc: {eval_result['worst_acc']:.4f}")
             lst_acc.append(eval_result['avg_acc'])
@@ -92,9 +92,9 @@ def main(config):
         eval_result_fin = trainer.eval(clients)
         print(
             f"After final update - "
-            f"Avg acc: {eval_result_fin['avg_acc']:.4f}, "
+            f"Avg acc (%): {eval_result_fin['avg_acc']:.4f}, "
             f"Avg error: {eval_result_fin['avg_error']:.4f}, "
-            f"Std acc: {eval_result_fin['std_acc']:.4f}, "
+            f"Std acc (%): {eval_result_fin['std_acc']:.4f}, "
             f"Std error: {eval_result_fin['std_error']:.4f}")
 
     return lst_acc, lst_loss, eval_rounds, lst_std_acc, lst_std_loss, lst_worst_acc
