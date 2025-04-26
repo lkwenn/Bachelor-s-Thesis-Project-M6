@@ -192,7 +192,7 @@ def results(TRAINERS):
     plt.show()
 
     # Print final STD for each model
-    print("Final STD values of each optimizer")
+    print("Final STD values of each optimizer:")
     for tr in TRAINERS:
         print(
             f"Optim: {fed_names[tr]} - "
