@@ -63,6 +63,21 @@ Most configurations are done in the [`config.yml`](config.yml) file. The setting
 
 Hyperparameters for the optimisers are configured manually in the [`trainer.py`](component/trainer.py) file. 
 
+## Visualise model architectures
+To visualise the architectures of the models used navigate to the [`model`](model) folder and run:
+```bash
+python modelName.py
+```
+This will create an architecture of the model stated in the prompt in the [`architectures`](model/architectures) folder. To visualise the architecture run either:
+```bash
+netron cnn_architecture.onnx
+```
+or run:
+```bash
+netron mlp_architecture.onnx
+```
+It will create a localhost that take you to a web-based interactive graph of the model. Cifar10 uses a CNN architecture while Mnist and Fashion-Mnist uses a MLP architecture. 
+
 ## Acknowledgements
 The authors of the paper would like to thank the following open-source project for their framework:
 - [AdaFedAdam](https://github.com/li-ju666/adafedadam/tree/main)

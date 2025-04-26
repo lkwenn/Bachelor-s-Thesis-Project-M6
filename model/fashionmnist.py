@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import torch
 
 
 class MLP(nn.Module):
@@ -27,3 +28,17 @@ def get_model(device):
         lr=0.01, params=model.parameters(),
         momentum=0.9, weight_decay=5e-4)
     return model, optimizer
+
+def visualize_model(model, input_size=(1, 28, 28)):
+    dummy = torch.zeros(1, *input_size)
+    torch.onnx.export(model,
+                      dummy,
+                      "architectures/mlp_architecture.onnx",
+                      input_names=["input"],
+                      output_names=["output"],
+                      opset_version=13,
+                      )
+
+if __name__ == "__main__":
+    model = MLP()
+    visualize_model(model)
