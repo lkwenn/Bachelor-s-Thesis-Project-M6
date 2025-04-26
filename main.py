@@ -125,7 +125,10 @@ def results(TRAINERS):
         plt.plot(rounds[tr], eval_acc[tr], color=colors[tr], label=fed_names[tr])
     plt.xlabel('Number of rounds')
     plt.ylabel('Accuracy / %')
-    plt.title(f"{config['dataset'].upper()} | Non-IID level: {config['non_iid_level']}")
+    if config['dataset'] == "fashionmnist":
+        plt.title(f"Fashion-MNIST | Non-IID level: {config['non_iid_level']}")
+    else:
+        plt.title(f"{config['dataset'].upper()} | Non-IID level: {config['non_iid_level']}")
     plt.legend()
     plt.grid()
     plt.tight_layout()
@@ -136,7 +139,10 @@ def results(TRAINERS):
         plt.plot(rounds[tr], eval_loss[tr], color=colors[tr], label=fed_names[tr])
     plt.xlabel('Number of rounds')
     plt.ylabel('Loss')
-    plt.title(f"{config['dataset'].upper()} | Non-IID level: {config['non_iid_level']}")
+    if config['dataset'] == "fashionmnist":
+        plt.title(f"Fashion-MNIST | Non-IID level: {config['non_iid_level']}")
+    else:
+        plt.title(f"{config['dataset'].upper()} | Non-IID level: {config['non_iid_level']}")
     plt.legend()
     plt.grid()
     plt.tight_layout()
@@ -148,7 +154,10 @@ def results(TRAINERS):
             plt.plot(rounds[tr], eval_worst_acc[tr], color=colors[tr], label=fed_names[tr])
         plt.xlabel('Number of rounds')
         plt.ylabel('Accuracy / %')
-        plt.title(f"{config['dataset'].upper()} | Non-IID level: {config['non_iid_level']}")
+        if config['dataset'] == "fashionmnist":
+            plt.title(f"Fashion-MNIST | Worst 30% | Non-IID level: {config['non_iid_level']}")
+        else:
+            plt.title(f"{config['dataset'].upper()} | Worst 30% | Non-IID level: {config['non_iid_level']}")
         plt.legend()
         plt.grid()
         plt.tight_layout()
