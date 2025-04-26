@@ -61,7 +61,7 @@ def main(config):
                 f"Avg error: {eval_result['avg_error']:.4f}, "
                 f"Std acc (%): {eval_result['std_acc']:.4f}, "
                 f"Std error: {eval_result['std_error']:.4f}, "
-                f"Worst 30% avg acc: {eval_result['worst_acc']:.4f}")
+                f"Worst 30% avg acc (%): {eval_result['worst_acc']:.4f}")
             lst_acc.append(eval_result['avg_acc'])
             lst_loss.append(eval_result['avg_error'])
             eval_rounds.append(round + 1)
@@ -162,6 +162,43 @@ def results(TRAINERS):
         plt.grid()
         plt.tight_layout()
         plt.show()
+
+    # Plot standard deviation of accuracy
+    for tr in TRAINERS:
+        plt.plot(rounds[tr], eval_std_acc[tr], color=colors[tr], label=fed_names[tr])
+    plt.xlabel('Number of rounds')
+    plt.ylabel('Accuracy / %')
+    if config['dataset'] == "fashionmnist":
+        plt.title(f"Fashion-MNIST | Standard Deviation | Non-IID level: {config['non_iid_level']}")
+    else:
+        plt.title(f"{config['dataset'].upper()} | Standard Deviation | Non-IID level: {config['non_iid_level']}")
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.show()
+
+    # Plot standard deviation of loss
+    for tr in TRAINERS:
+        plt.plot(rounds[tr], eval_std_loss[tr], color=colors[tr], label=fed_names[tr])
+    plt.xlabel('Number of rounds')
+    plt.ylabel('Loss')
+    if config['dataset'] == "fashionmnist":
+        plt.title(f"Fashion-MNIST | Standard Deviation | Non-IID level: {config['non_iid_level']}")
+    else:
+        plt.title(f"{config['dataset'].upper()} | Standard Deviation | Non-IID level: {config['non_iid_level']}")
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.show()
+
+    # Print final STD for each model
+    print("Final STD values of each optimizer")
+    for tr in TRAINERS:
+        print(
+            f"Optim: {fed_names[tr]} - "
+            f"Acc. STD (%): {eval_std_acc[tr][-1]} - "
+            f"Loss. STD: {eval_std_loss[tr][-1]}"
+        )
 
 if __name__ == "__main__":
     # Get arguments from config file
