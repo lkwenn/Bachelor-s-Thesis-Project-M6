@@ -7,6 +7,7 @@ from utils import preprocess
 import torch
 from component.trainer import FedAvg, FedAdam, FedYogi, AdaFedAdam, FedAvgM
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def main(config):
@@ -192,12 +193,32 @@ def results(TRAINERS):
     plt.show()
 
     # Print final STD for each model
-    print("Final STD values of each optimizer:")
+    print("Averaged last five evaluation values of each optimizer:")
     for tr in TRAINERS:
+        # Accuracy
+        last_acc = eval_acc[tr][-5:]
+        mean_acc = np.mean(last_acc)
+        std_acc = np.std(last_acc, ddof=1)
+        error_acc = std_acc / np.sqrt(5)
+
+        # Standard deviation
+        last_std = eval_std_acc[tr][-5:]
+        mean_std = np.mean(last_std)
+        std_std = np.std(last_std, ddof=1)
+        error_std = std_std / np.sqrt(5)
+
+        # Worst 30%
+        last_worst = eval_worst_acc[tr][-5:]
+        mean_worst = np.mean(last_worst)
+        std_worst = np.std(last_worst, ddof=1)
+        error_worst = std_worst / np.sqrt(5)
+
+        # Print final results
         print(
             f"Optim: {fed_names[tr]} - "
-            f"Acc. STD (%): {eval_std_acc[tr][-1]} - "
-            f"Loss. STD: {eval_std_loss[tr][-1]}"
+            f"Acc. (%): {mean_acc} +/- {error_acc} | "
+            f"Acc. STD (%): {mean_std} +/- {error_std} | "
+            f"Acc worst (%): {mean_worst} +/- {error_worst}"
         )
 
 if __name__ == "__main__":
