@@ -1,6 +1,6 @@
 # Optimisation Algorithms for Federated Learning
 
-This repository contains the code for the publication: [Optimisation Algorithms for Federated Learning](url) (link will be available once published)
+This repository contains the code for the publication: [Optimisation Algorithms for Federated Learning](https://kth.diva-portal.org/smash/record.jsf?c=1&pid=diva2%3A2034529&dswid=1640)
  
 ## Table of Contents
 - [Installation](#installation)
